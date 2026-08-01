@@ -15,7 +15,7 @@ import (
 func main() {
 	// 1. Konfigurasi Koneksi Database PostgreSQL
 	// Sesuaikan user, password, dan dbname dengan milikmu!
-	dsn := "host=localhost user=postgres password=postgres dbname=course_db port=5432 sslmode=disable"
+	dsn := "host=localhost user=user_course password=password_course dbname=db_course port=5432 sslmode=disable"
 	db, err := sql.Open("postgres", dsn)
 	if err != nil {
 		log.Fatalf("Gagal membuka database: %v", err)
