@@ -1,0 +1,35 @@
+version: '3.8'
+
+services:
+  db-course:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_USER: user_course
+      POSTGRES_PASSWORD: password_course
+      POSTGRES_DB: db_course
+    ports:
+      - "5432:5432"
+    volumes:
+      # Melakukan mount init.sql agar dijalankan otomatis oleh Postgres
+      - ./course-service/db/init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U user_course -d db_course"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  db-enrollment:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_USER: user_enrollment
+      POSTGRES_PASSWORD: password_enrollment
+      POSTGRES_DB: db_enrollment
+    ports:
+      - "5433:5432" # Pakai port 5433 di laptop agar tidak bentrok dengan db-course
+    volumes:
+      - ./enrollment-service/db/init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U user_enrollment -d db_enrollment"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
