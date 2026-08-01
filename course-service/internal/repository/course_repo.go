@@ -81,3 +81,36 @@ func (r *CourseRepository) ReleaseSeat(ctx context.Context, courseID int) error 
 	}
 	return nil
 }
+
+// GetAvailableCourses mengambil daftar course yang kuotanya masih ada
+func (r *CourseRepository) GetAvailableCourses(ctx context.Context) ([]domain.Course, error) {
+	query := `
+		SELECT id, code, name, description, lecturer, capacity, taken, created_at 
+		FROM courses 
+		WHERE capacity - taken > 0
+	`
+
+	rows, err := r.db.QueryContext(ctx, query)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var courses []domain.Course
+	for rows.Next() {
+		var c domain.Course
+		err := rows.Scan(
+			&c.ID, &c.Code, &c.Name, &c.Description, &c.Lecturer, &c.Capacity, &c.Taken, &c.CreatedAt,
+		)
+		if err != nil {
+			return nil, err
+		}
+		courses = append(courses, c)
+	}
+
+	if err = rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return courses, nil
+}
