@@ -11,11 +11,15 @@ import (
 	"enrollment-service/internal/repository"
 )
 
-// Struct untuk membaca respon JSON dari Course Service
-type CourseResponse struct {
+// 1. Tambahkan struct pembungkus "data" agar sesuai dengan JSON Course Service
+type CourseDetail struct {
 	ID       int `json:"id"`
 	Capacity int `json:"capacity"`
 	Taken    int `json:"taken"`
+}
+
+type CourseResponse struct {
+	Data CourseDetail `json:"data"` // <-- Ini kuncinya!
 }
 
 type EnrollmentService struct {
@@ -70,8 +74,8 @@ func (s *EnrollmentService) EnrollStudent(ctx context.Context, studentID string,
 		return nil, fmt.Errorf("gagal membaca data course: %w", err)
 	}
 
-	// 3. Validasi kuota kelas
-	if course.Taken >= course.Capacity {
+	// 3. Validasi kuota kelas (Diubah jadi course.Data.Taken dan course.Data.Capacity)
+	if course.Data.Taken >= course.Data.Capacity {
 		return nil, domain.ErrCourseFull
 	}
 

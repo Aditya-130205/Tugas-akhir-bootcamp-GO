@@ -1,6 +1,9 @@
 version: '3.8'
 
 services:
+  # ==========================================
+  # 1. DATABASE COURSE
+  # ==========================================
   db-course:
     image: postgres:15-alpine
     environment:
@@ -10,7 +13,6 @@ services:
     ports:
       - "5432:5432"
     volumes:
-      # Melakukan mount init.sql agar dijalankan otomatis oleh Postgres
       - ./course-service/db/init.sql:/docker-entrypoint-initdb.d/init.sql
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U user_course -d db_course"]
@@ -18,6 +20,9 @@ services:
       timeout: 5s
       retries: 5
 
+  # ==========================================
+  # 2. DATABASE ENROLLMENT
+  # ==========================================
   db-enrollment:
     image: postgres:15-alpine
     environment:
@@ -25,7 +30,7 @@ services:
       POSTGRES_PASSWORD: password_enrollment
       POSTGRES_DB: db_enrollment
     ports:
-      - "5433:5432" # Pakai port 5433 di laptop agar tidak bentrok dengan db-course
+      - "5433:5432"
     volumes:
       - ./enrollment-service/db/init.sql:/docker-entrypoint-initdb.d/init.sql
     healthcheck:
@@ -33,3 +38,46 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
+
+  # ==========================================
+  # 3. COURSE SERVICE (PORT 8081)
+  # ==========================================
+  course-service:
+    build:
+      context: ./course-service
+      dockerfile: Dockerfile
+    ports:
+      - "8081:8081"
+    environment:
+      - PORT=8081
+      - DB_HOST=db-course
+      - DB_PORT=5432
+      - DB_USER=user_course
+      - DB_PASSWORD=password_course
+      - DB_NAME=db_course
+    depends_on:
+      db-course:
+        condition: service_healthy
+
+  # ==========================================
+  # 4. ENROLLMENT SERVICE (PORT 8082)
+  # ==========================================
+  enrollment-service:
+    build:
+      context: ./enrollment-service
+      dockerfile: Dockerfile
+    ports:
+      - "8082:8082"
+    environment:
+      - PORT=8082
+      - DB_HOST=db-enrollment
+      - DB_PORT=5432
+      - DB_USER=user_enrollment
+      - DB_PASSWORD=password_enrollment
+      - DB_NAME=db_enrollment
+      - COURSE_SERVICE_URL=http://course-service:8081 # Panggil via nama container
+    depends_on:
+      db-enrollment:
+        condition: service_healthy
+      course-service:
+        condition: service_started
