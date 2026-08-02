@@ -9,12 +9,11 @@ import (
 	"course-service/internal/service"
 
 	"github.com/gin-gonic/gin"
-	_ "github.com/lib/pq" // Driver PostgreSQL
+	_ "github.com/lib/pq"
 )
 
 func main() {
 	// 1. Konfigurasi Koneksi Database PostgreSQL
-	// Sesuaikan user, password, dan dbname dengan milikmu!
 	dsn := "host=localhost user=user_course password=password_course dbname=db_course port=5432 sslmode=disable"
 	db, err := sql.Open("postgres", dsn)
 	if err != nil {
@@ -38,9 +37,9 @@ func main() {
 	// 4. Mendaftarkan Route dari Handler
 	handler.NewCourseHandler(router, courseService)
 
-	// 5. Menjalankan Server di Port 8080
-	log.Println("🚀 Course Service berjalan di http://localhost:8080")
-	if err := router.Run(":8080"); err != nil {
+	// 5. Menjalankan Server di Port 8081
+	log.Println("🚀 Course Service berjalan di http://localhost:8081")
+	if err := router.Run(":8081"); err != nil {
 		log.Fatalf("Gagal menjalankan server: %v", err)
 	}
 }

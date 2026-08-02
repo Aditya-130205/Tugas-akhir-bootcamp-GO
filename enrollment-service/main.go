@@ -26,8 +26,8 @@ func main() {
 	}
 	log.Println("Berhasil terhubung ke database Enrollment PostgreSQL (Port 5433)!")
 
-	// URL Course Service yang berjalan di port 8080
-	courseServiceURL := "http://localhost:8080"
+	// URL Course Service yang berjalan di port 8081
+	courseServiceURL := "http://localhost:8081"
 
 	// Dependency Injection
 	enrollmentRepo := repository.NewEnrollmentRepository(db)
@@ -36,9 +36,9 @@ func main() {
 	router := gin.Default()
 	handler.NewEnrollmentHandler(router, enrollmentService)
 
-	// Enrollment Service berjalan di port 8081 agar tidak bentrok dengan Course Service (8080)
-	log.Println("🚀 Enrollment Service berjalan di http://localhost:8081")
-	if err := router.Run(":8081"); err != nil {
+	// Enrollment Service berjalan di port 8082 agar tidak bentrok dengan Course Service (8081)
+	log.Println("🚀 Enrollment Service berjalan di http://localhost:8082")
+	if err := router.Run(":8082"); err != nil {
 		log.Fatalf("Gagal menjalankan server enrollment: %v", err)
 	}
 }
