@@ -77,3 +77,9 @@ func (r *EnrollmentRepository) GetByStudentIDAndCourseID(ctx context.Context, st
 	}
 	return &e, nil
 }
+
+func (r *EnrollmentRepository) UpdateStatus(ctx context.Context, id int, status string) error {
+	query := `UPDATE enrollments SET status = $1 WHERE id = $2`
+	_, err := r.db.ExecContext(ctx, query, status, id)
+	return err
+}

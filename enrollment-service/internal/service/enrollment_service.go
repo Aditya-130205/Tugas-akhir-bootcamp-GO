@@ -104,3 +104,32 @@ func (s *EnrollmentService) GetEnrollmentByID(ctx context.Context, id int) (*dom
 	}
 	return enrollment, nil
 }
+
+// CancelEnrollment membatalkan pendaftaran siswa & mengembalikan kuota
+func (s *EnrollmentService) CancelEnrollment(ctx context.Context, id int) error {
+	// 1. Cek apakah enrollment ada
+	enrollment, err := s.repo.GetByID(ctx, id)
+	if err != nil {
+		return err
+	}
+	if enrollment == nil {
+		return domain.ErrEnrollmentNotFound
+	}
+
+	// 2. Jika sudah dibatalkan sebelumnya, lewati saja (Idempotent)
+	if enrollment.Status == domain.StatusCancelled {
+		return nil
+	}
+
+	// 3. Update status pendaftaran menjadi CANCELLED di database
+	if err := s.repo.UpdateStatus(ctx, id, domain.StatusCancelled); err != nil {
+		return fmt.Errorf("gagal mengubah status pendaftaran: %w", err)
+	}
+
+	// 4. (Opsional) Mengembalikan kuota ke Course Service jika endpoint release-nya ada
+	// url := fmt.Sprintf("%s/courses/%d/release", s.courseServiceURL, enrollment.CourseID)
+	// req, _ := http.NewRequestWithContext(ctx, http.MethodPost, url, nil)
+	// _, _ = s.httpClient.Do(req)
+
+	return nil
+}

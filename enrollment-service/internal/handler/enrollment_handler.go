@@ -27,6 +27,7 @@ func NewEnrollmentHandler(r *gin.Engine, s *service.EnrollmentService) {
 	{
 		routes.POST("", h.CreateEnrollment)
 		routes.GET("/:id", h.GetEnrollmentByID)
+		routes.DELETE("/:id", h.CancelEnrollment) // <-- NIH BARUSAN DITAMBAHKAN!
 	}
 }
 
@@ -69,4 +70,25 @@ func (h *EnrollmentHandler) GetEnrollmentByID(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, enrollment)
+}
+
+// Method CancelEnrollment (Penanganan DELETE /enrollments/:id)
+func (h *EnrollmentHandler) CancelEnrollment(c *gin.Context) {
+	idStr := c.Param("id")
+	id, err := strconv.Atoi(idStr)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "ID pendaftaran tidak valid"})
+		return
+	}
+
+	if err := h.service.CancelEnrollment(c.Request.Context(), id); err != nil {
+		if errors.Is(err, domain.ErrEnrollmentNotFound) {
+			c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
+			return
+		}
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "pendaftaran berhasil dibatalkan"})
 }
