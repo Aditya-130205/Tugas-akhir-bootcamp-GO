@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"errors"
 	"net/http"
 	"strconv"
 
@@ -12,6 +13,25 @@ import (
 
 type CourseHandler struct {
 	service *service.CourseService
+}
+
+// Helper internal untuk mengirim response sukses (Amplop Sukses)
+func respondSuccess(c *gin.Context, statusCode int, data interface{}) {
+	c.JSON(statusCode, domain.SuccessEnvelope{
+		Success: true,
+		Data:    data,
+	})
+}
+
+// Helper internal untuk mengirim response error (Amplop Error)
+func respondError(c *gin.Context, statusCode int, errorCode string, message string) {
+	c.JSON(statusCode, domain.ErrorEnvelope{
+		Success: false,
+		Error: domain.ErrorDetail{
+			Code:    errorCode,
+			Message: message,
+		},
+	})
 }
 
 // NewCourseHandler berfungsi untuk mendaftarkan rute (routes) API
@@ -32,28 +52,30 @@ func (h *CourseHandler) CreateCourse(c *gin.Context) {
 	var course domain.Course
 	// Membaca JSON dari request body
 	if err := c.ShouldBindJSON(&course); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Format input JSON tidak valid"})
+		respondError(c, http.StatusBadRequest, "ERR_VALIDATION", "Format input JSON tidak valid")
 		return
 	}
 
 	// Memanggil layer Service
 	if err := h.service.CreateCourse(c.Request.Context(), &course); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		respondError(c, http.StatusInternalServerError, "ERR_INTERNAL", err.Error())
 		return
 	}
 
-	c.JSON(http.StatusCreated, gin.H{"message": "Course berhasil dibuat", "data": course})
+	// Response Sukses (201 Created)
+	respondSuccess(c, http.StatusCreated, course)
 }
 
 // GetAvailableCourses mengambil course yang kuotanya masih ada
 func (h *CourseHandler) GetAvailableCourses(c *gin.Context) {
 	courses, err := h.service.GetAvailableCourses(c.Request.Context())
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal mengambil data course"})
+		respondError(c, http.StatusInternalServerError, "ERR_INTERNAL", "Gagal mengambil data course")
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"data": courses})
+	// Response Sukses (200 OK)
+	respondSuccess(c, http.StatusOK, courses)
 }
 
 // GetCourseByID mengambil detail satu course
@@ -62,19 +84,20 @@ func (h *CourseHandler) GetCourseByID(c *gin.Context) {
 	idParam := c.Param("id")
 	id, err := strconv.Atoi(idParam)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Format ID harus berupa angka"})
+		respondError(c, http.StatusBadRequest, "ERR_VALIDATION", "Format ID harus berupa angka")
 		return
 	}
 
 	course, err := h.service.GetCourseByID(c.Request.Context(), id)
 	if err != nil {
-		if err == domain.ErrCourseNotFound {
-			c.JSON(http.StatusNotFound, gin.H{"error": "Course tidak ditemukan"})
+		if errors.Is(err, domain.ErrCourseNotFound) {
+			respondError(c, http.StatusNotFound, "ERR_COURSE_NOT_FOUND", "course tidak ditemukan")
 			return
 		}
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Terjadi kesalahan pada server"})
+		respondError(c, http.StatusInternalServerError, "ERR_INTERNAL", "Terjadi kesalahan pada server")
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"data": course})
+	// Response Sukses (200 OK)
+	respondSuccess(c, http.StatusOK, course)
 }
