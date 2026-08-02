@@ -26,3 +26,25 @@ type Enrollment struct {
 	Status    string    `json:"status"`
 	CreatedAt time.Time `json:"created_at"`
 }
+
+// ==========================================
+// Struct Response Amplop (Envelope)
+// ==========================================
+
+// SuccessEnvelope untuk format JSON saat HTTP 2xx
+type SuccessEnvelope struct {
+	Success bool        `json:"success"`
+	Data    interface{} `json:"data"`
+}
+
+// ErrorDetail penampung objek error
+type ErrorDetail struct {
+	Code    string `json:"code"`
+	Message string `json:"message"`
+}
+
+// ErrorEnvelope untuk format JSON saat HTTP 4xx/5xx
+type ErrorEnvelope struct {
+	Success bool        `json:"success"`
+	Error   ErrorDetail `json:"error"`
+}
